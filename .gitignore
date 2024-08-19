@@ -1,0 +1,8 @@
+/marge_source
+/pz_origin
+/source
+/temp
+/fetch
+*.pyc
+*.zip
+ouutput.*

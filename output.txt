@@ -1,0 +1,285 @@
+Text: Gardening Today
+Position: 62-79
+
+Text: This book contains some basic gardening tips. Did you know that plants need water? It's true!
+Position: 108-203
+
+Text: Gardening
+Position: 242-253
+
+Text: The Modern Photographer
+Position: 288-313
+
+Text: Framing... composition... rule of thirds... bokeh... wait, <i>how</i> much do these lenses cost??
+Position: 342-441
+
+Text: Photography
+Position: 480-493
+
+Text: Chef's Kitchen
+Position: 528-544
+
+Text: This book contains some simple recipes and just general basic cooking tips.
+Position: 573-650
+
+Text: Cooking
+Position: 689-698
+
+Text: Philosophers & Philistines
+Position: 733-761
+
+Text: Excerpts of essays pitting great philosophers against each other and then declaring a winner... how serious is this book?
+Position: 790-913
+
+Text: Intellectual
+Position: 952-966
+
+Text: Artists of the 20th Century
+Position: 1001-1030
+
+Text: Great images from the last century and descriptions of the artists and their technique.
+Position: 1059-1148
+
+Text: Artistic
+Position: 1187-1197
+
+Text: Points of Grammar
+Position: 1232-1251
+
+Text: What is this stuff? What's an Oxford comma? This book is weird, dense, and confusing.
+Position: 1280-1367
+
+Text: Writing
+Position: 1406-1415
+
+Text: Turning Strangers Into Friends
+Position: 1450-1482
+
+Text: For anybody who's never been an extrovert, this book promises to help you fake it till you make it.
+Position: 1511-1612
+
+Text: Charisma
+Position: 1651-1661
+
+Text: Goose of Thrones
+Position: 1724-1742
+
+Text: When the barnyard's throne is abruptly empty, who will be best positioned to claim it? Some say chaos is a ladder.
+Position: 1771-1887
+
+Text: Relaxation
+Position: 1925-1937
+
+Text: Space Vikings
+Position: 1973-1988
+
+Text: When small agile ships arrive from space to steal the world's cryptocurrency, can they be stopped?
+Position: 2017-2117
+
+Text: Relaxation
+Position: 2155-2167
+
+Text: The Time Vortex
+Position: 2203-2220
+
+Text: When everyman Dan finds a swirling vortex full of wildly spinning clocks in his armoire, will the timeline survive?
+Position: 2249-2366
+
+Text: Relaxation
+Position: 2404-2416
+
+Text: Cortical Impasse
+Position: 2452-2470
+
+Text: Something strange is going on down at the brain factory in this high octane sci-fi thriller.
+Position: 2499-2593
+
+Text: Relaxation
+Position: 2631-2643
+
+Text: Magic Academy: Academy of Magic
+Position: 2679-2712
+
+Text: Twin sisters discover they have magic and attend Magic Academy to learn how to use their magic. Will their magic save them from the dangers of evil magic?
+Position: 2741-2897
+
+Text: Relaxation
+Position: 2935-2947
+
+Text: The Lyman Hypothesis
+Position: 2983-3005
+
+Text: A beloved children's cartoon character disappears from everyone's memories seemingly overnight. Everyone's, that is, except Lyman's; will he be able to find the truth? Or will the memories slip through his grasp like they have everyone else's?
+Position: 3034-3279
+
+Text: Relaxation
+Position: 3317-3329
+
+Text: Stacy Supernova, vol. 1: Plutonium Panic!
+Position: 3365-3408
+
+Text: The first book in the long-running Stacy Supernova series. Near Stacy's backwater vacation home on Pluto, the dastardly Borax Blackhole's captured a plutonium mine and is threatening to detonate the fuel line leading down to the planet's core. It's up to the ever-dependable Stacy Supernova to put a stop to it!
+Position: 3437-3750
+
+Text: Relaxation
+Position: 3788-3800
+
+Text: Safe, Sane, Consensual: Exploring Kink
+Position: 3861-3901
+
+Text: This book goes into the basics of domination and submission, exploring common kinks.
+Position: 3930-4016
+
+Text: Sexual Knowledge
+Position: 4055-4073
+
+Text: Dominance
+Position: 4076-4087
+
+Text: Submission
+Position: 4090-4102
+
+Text: Arousal
+Position: 4123-4132
+
+Text: Illustrated Sex Positions
+Position: 4168-4195
+
+Text: Just artsy enough to not be outright porn, this book shows realistically illustrated people in positions both common and unusual.
+Position: 4224-4355
+
+Text: Sexual Knowledge
+Position: 4394-4412
+
+Text: Arousal
+Position: 4433-4442
+
+Text: Become a Legendary Lover
+Position: 4478-4504
+
+Text: Sparsely illustrated, sadly, but this book goes into incredible detail about sexual techniques.
+Position: 4533-4630
+
+Text: Sexual Knowledge
+Position: 4669-4687
+
+Text: Hand
+Position: 4690-4696
+
+Text: Oral
+Position: 4699-4705
+
+Text: Vaginal
+Position: 4708-4717
+
+Text: Penetrative
+Position: 4720-4733
+
+Text: Anal
+Position: 4736-4742
+
+Text: Arousal
+Position: 4764-4773
+
+Text: Renaldo Wrangles a Wench
+Position: 4845-4871
+
+Text: Taking place in some sort of fairy tale medieval setting, this story describes a squire conquering one of the local womenfolk.
+Position: 4900-5028
+
+Text: Sexual Knowledge
+Position: 5067-5085
+
+Text: Relaxation
+Position: 5106-5118
+
+Text: Arousal
+Position: 5122-5131
+
+Text: The Oral Training of Alice
+Position: 5168-5196
+
+Text: A dirty little tale about submissive Alice servicing many men and learning to take ever bigger cocks ever deeper.
+Position: 5225-5340
+
+Text: Sexual Knowledge
+Position: 5379-5397
+
+Text: Oral
+Position: 5400-5406
+
+Text: Relaxation
+Position: 5427-5439
+
+Text: Arousal
+Position: 5443-5452
+
+Text: To Serve Man
+Position: 5489-5503
+
+Text: An odd but hot story of an alien babe serving as relief for a crew of male astronauts.
+Position: 5532-5620
+
+Text: Sexual Knowledge
+Position: 5659-5677
+
+Text: Dominance
+Position: 5680-5691
+
+Text: Submission
+Position: 5694-5706
+
+Text: Relaxation
+Position: 5727-5739
+
+Text: Arousal
+Position: 5743-5752
+
+Text: One Hot Summer on the Horse Ranch
+Position: 5789-5824
+
+Text: When city boy Niles moves to the country and decides to take lessons from rugged Randy at the local horse ranch, he's in for the ride of his life.
+Position: 5853-6001
+
+Text: Sexual Knowledge
+Position: 6040-6058
+
+Text: Oral
+Position: 6061-6067
+
+Text: Anal
+Position: 6070-6076
+
+Text: Relaxation
+Position: 6097-6109
+
+Text: Arousal
+Position: 6113-6122
+
+Text: You've already read this book.
+Position: 6883-6915
+
+Text: $skillsraisedtoday
+Position: 7488-7508
+
+Text: There is nothing you can learn from reading this.
+Position: 7968-8019
+
+Text: You're a bit fried on this stuff for today. Maybe tomorrow.
+Position: 8099-8160
+
+Text: bookshelf
+Position: 8922-8933
+
+Text: bookshelf
+Position: 8985-8996
+
+Text: bookshelf
+Position: 9182-9193
+
+Text: bookshelf
+Position: 9219-9230
+
+Text: bookshelf
+Position: 9267-9278
+
