@@ -32,12 +32,15 @@ class TweeParser:
         self.length = len(content)
         self.tempText = ""
         self.tempIndex = 0
-        self.tempContext = ""
         self.IDindex = 0
         self.passage = ""
 
         while self.index < self.length:
             self.parse_element()
+        if self.tempText.strip()!="" :
+            self.extracted_texts_push("text",self.tempText.strip(),self.tempIndex)
+            self.tempIndex = 0
+            self.tempText = ""
 
         logger.info("文件解析完成")
 
@@ -49,7 +52,6 @@ class TweeParser:
         char = self.content[self.index]
 
         if DEBUG:logger.debug(f"正在解析字符: '{char}' {self.index}")
-        
         if char == ':' and self.peek() == ':':
             self.parse_passage()
         elif char == '[' and self.peek() == '[':
@@ -66,8 +68,19 @@ class TweeParser:
         #     self.current_line += 1
         #     self.current_column = 0
         #     self.index += 1
-        else:
+        elif char.strip() and char !="\n" and char !="\r":
             self.parse_text("")
+        elif char=="\n" and self.peek() == "\n":
+            if self.tempText.strip()!="":
+                self.extracted_texts_push("text",self.tempText.strip(),self.tempIndex)
+                self.tempIndex = 0
+                self.tempText = ""
+            self.index+=2
+        elif self.tempText.strip():
+            self.tempText += char
+            self.index+=1
+        else:
+            self.index+=1
 
     def parse_passage(self):
         if DEBUG:logger.debug(f"开始解析段落 at 行 {self.current_line}, 列 {self.current_column}")
@@ -83,9 +96,8 @@ class TweeParser:
         if DEBUG:logger.debug(f"开始解析链接 at 行 {self.current_line}, 列 {self.current_column}")
         self.consume(2)  # Consume '[['
         link_text = self.consume_until(']]')
-        self.extracted_texts_push("link",link_text,self.index - len(link_text))
+        self.extracted_texts_push("link",f"[[{link_text}]]",self.index - len(link_text)-2)
         self.consume(2)  # Consume ']]'
-        self.tempContext += f"[[{link_text}]]"
         # logger.info(f"解析到链接: {link_text}")
 
     def parse_macro(self):
@@ -94,19 +106,16 @@ class TweeParser:
         self.consume(2)  # Consume '<<'
         macro_content = self.consume_until('>>')
         check_token = lambda s, *keywords: any(keyword in s for keyword in keywords)
-        if "<<script" in '<<'+macro_content :
-            self.index = zeroIndex
-            self.parse_js_block_start()
-        elif check_token("<<"+macro_content,"<<if","<<elif","<<else","<</if","<<for","<</for"):
-            if self.tempText.strip()!="":
-                self.extracted_texts_push("text",self.tempText,self.tempIndex,self.tempContext)
+        if check_token("<<"+macro_content,"<<if","<<elif","<<else","<<for") and self.peek(2)=="\n":
+            if self.tempText.strip()!="" :
+                self.extracted_texts_push("text",self.tempText.strip(),self.tempIndex)
                 self.tempIndex = 0
                 self.tempText = ""
-                self.tempContext = ""
-            if re.search(r'(?<!\[)["\'](.+?)["\'](?!\])',macro_content):
-                self.extracted_texts_push("Macro",f"<<{macro_content}>>",self.index-len(macro_content)-2)
+            # if re.search(r'(?<!\[)["\'](.+?)["\'](?!\])',macro_content):
+            # self.extracted_texts_push("Macro",f"<<{macro_content}>>",self.index-len(macro_content)-2)
             self.consume(2)  # Consume '>>'
-            self.tempContext += f"<<{macro_content}>>"
+            self.tempText += f"<<{macro_content}>>"
+            if self.tempIndex==0:self.tempIndex=zeroIndex
             if DEBUG:logger.info(f"解析到宏: {macro_content}")
         else:
             self.index = zeroIndex
@@ -114,29 +123,33 @@ class TweeParser:
 
     def parse_html_tag(self):
         # logger.debug(f"开始解析HTML标签 at 行 {self.current_line}, 列 {self.current_column}")
-        self.consume(1)
         zeroIndex=self.index
+        self.consume(1)
         tag_content = self.consume_until('>')
         if "=" in tag_content:
             self.index = zeroIndex
-            tag_content = self.consume_until('=')
             self.consume(1)
+            tag_content = self.consume_until('=')
+            tag_content+="="
             if self.peek()=="'":
-                self.consume(1)
-                tag_content += self.consume_until('\'')
+                self.consume(2)
+                tag_content += "'"+self.consume_until('\'')
             elif self.peek()=="\"":
-                self.consume(1)
-                tag_content += self.consume_until('"')
+                self.consume(2)
+                tag_content += "\""+self.consume_until('"')
+            
             tag_content += self.consume_until('>')
-            self.extracted_texts_push("HTML",f"<{tag_content}>",self.index-len(tag_content)-2)
+            # self.extracted_texts_push("HTML",f"{tag_content}>",zeroIndex)
         self.consume(1)  # Consume '>'
-        if self.tempText.strip()!="" and tag_content not in ["i","/i","b","/b","br"]:
-            self.extracted_texts_push("text",self.tempText,self.tempIndex,self.tempContext)
+        if self.tempText.strip()!="" and (tag_content=="br" and self.peek()=="b" and self.peek(2)=="r" and self.peek(3)==">"):
+            self.extracted_texts_push("text",self.tempText.strip(),self.tempIndex)
             self.tempIndex = 0
             self.tempText = ""
-            self.tempContext = ""
+            if (tag_content=="br" and self.peek()=="b" and self.peek(2)=="r" and self.peek(3)==">"):
+                self.index += 4
         else:
-            self.tempContext += f"<{tag_content}>"
+            self.tempText += f"<{tag_content}>"
+            if self.tempIndex==0:self.tempIndex=zeroIndex
         # logger.info(f"跳过HTML标签: <{tag_content}>")
 
     def parse_variable(self):
@@ -148,14 +161,17 @@ class TweeParser:
     def parse_text(self,type):
         if type=="macro":
             self.consume(2)
-        text = self.consume_while(lambda c: c not in '<' and not (c==':' and self.peek()==":"))
+        zeroIndex = self.index
+        text = self.consume_until("\n\n")
+        if "<" in text:
+            self.index = zeroIndex
+            text = self.consume_while(lambda c: c not in '<' and not (c==':' and self.peek()==":"))
         if type=="macro":
             self.tempText += "<<"+text
-            if self.tempIndex==0:self.tempIndex=self.index-len(text)
+            if self.tempIndex==0:self.tempIndex=zeroIndex-2
         elif text.strip():
             self.tempText += text
-            if self.tempIndex==0:self.tempIndex=self.index-len(text)
-        if self.tempContext=="":self.tempContext=text
+            if self.tempIndex==0:self.tempIndex=zeroIndex
         # elif text.strip():
         #     self.extracted_texts.append({
         #         'type': 'text',
@@ -165,6 +181,11 @@ class TweeParser:
         #     if DEBUG:logger.debug(f"解析到文本: {text[:20]}... at 行 {self.current_line}, 列 {self.current_column - len(text)}")
 
     def parse_js_block_start(self):
+        if self.tempText.strip()!="" :
+            self.tempText += f"<<script>>"
+            self.extracted_texts_push("text",self.tempText.strip(),self.tempIndex)
+            self.tempIndex = 0
+            self.tempText = ""
         if DEBUG:logger.debug(f"开始解析JavaScript代码块 at 行 {self.current_line}, 列 {self.current_column}")
         self.consume(12)  # Consume '<<script>>'
         self.in_js_block = True
@@ -213,6 +234,14 @@ class TweeParser:
             self.index += 1
         return self.content[start:self.index]
     def extracted_texts_push(self,type,text,position,context=""):
+        if not text.strip():return
+        contextStat = max(0,len(self.extracted_texts)-3)
+        if not context:
+            for i in range(contextStat,len(self.extracted_texts)):
+                context += self.extracted_texts[i]['text']
+        if self.content[position]!=text[0]:
+            print(type,text,position,self.content[position-5:position+5])
+            a+1
         self.extracted_texts.append({
             'id': f"{self.passage}_{self.IDindex}",
             'type': type,

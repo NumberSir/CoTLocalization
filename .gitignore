@@ -1,8 +1,16 @@
 /marge_source
+/translated_source
 /pz_origin
 /source
 /temp
 /fetch
+/oldfetch
+/oldsource
+/.vscode
+/trans
 *.pyc
 *.zip
 ouutput.*
+*.html
+out.log
+*.bat
