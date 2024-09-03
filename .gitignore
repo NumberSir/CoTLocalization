@@ -14,3 +14,5 @@ ouutput.*
 *.html
 out.log
 *.bat
+*.apk
+*.json

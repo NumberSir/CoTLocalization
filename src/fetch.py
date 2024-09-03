@@ -63,26 +63,26 @@ class Fetcher:
             with open(os.path.join(DIR_MARGE_SOURCE/"Passages", f"{prefix}.twee" if not prefix.endswith('.twee') else prefix), 'w', encoding='utf-8') as f:
                 f.write(merged_content)
     def fetch_source(self):
-        if DIR_FETCH.exists():
-            shutil.rmtree(DIR_FETCH)
-        os.makedirs(DIR_FETCH/"Passages", exist_ok=True)
-        for root, dirs, files in os.walk(DIR_MARGE_SOURCE):
-            for d in dirs:
-                if not os.path.exists(DIR_FETCH/d):
-                    os.makedirs(DIR_FETCH/d)
-            for file in files:
-                # if "Encounter" in file:continue
-                logger.info(f"parsing {file}")
-                if file.endswith(".twee"):
-                    with open(f"{root}\\{file}", "r", encoding="utf-8") as fp:
-                        parser = TweeParser()
-                        parser.parse(fp.read())
-                    parser.extracted_texts.sort(key=lambda x:x['position'])
-                    fetchData = {}
-                    for d in parser.extracted_texts:
-                        fetchData[d['id']] = d
-                    with open(root.replace("marge_source","fetch")+"\\"+file.replace('.twee','.json'),encoding="utf-8",mode="w+") as fp:
-                        fp.write(json.dumps(fetchData,ensure_ascii=False))
+        # if DIR_FETCH.exists():
+        #     shutil.rmtree(DIR_FETCH)
+        # os.makedirs(DIR_FETCH/"Passages", exist_ok=True)
+        # for root, dirs, files in os.walk(DIR_MARGE_SOURCE):
+        #     for d in dirs:
+        #         if not os.path.exists(DIR_FETCH/d):
+        #             os.makedirs(DIR_FETCH/d)
+        #     for file in files:
+        #         # if "Encounter" in file:continue
+        #         logger.info(f"parsing {file}")
+        #         if file.endswith(".twee"):
+        #             with open(f"{root}\\{file}", "r", encoding="utf-8") as fp:
+        #                 parser = TweeParser()
+        #                 parser.parse(fp.read())
+        #             parser.extracted_texts.sort(key=lambda x:x['position'])
+        #             fetchData = {}
+        #             for d in parser.extracted_texts:
+        #                 fetchData[d['id']] = d
+        #             with open(root.replace("marge_source","fetch")+"\\"+file.replace('.twee','.json'),encoding="utf-8",mode="w+") as fp:
+        #                 fp.write(json.dumps(fetchData,ensure_ascii=False))
         os.makedirs(DIR_FETCH/"Widgets", exist_ok=True)
         for root, dirs, files in os.walk(DIR_SOURCE/"Widgets"):
             for d in dirs:
@@ -152,7 +152,7 @@ class Fetcher:
         logger.add('out.log')
         for root, dirs, files in os.walk(DIR_FETCH):
             for file in files:
-                if '\js' not in root :continue
+                # if '\js' in root :continue
                 logger.info(f"reading {file}")
                 try:
                     with open(f"{root}\\{file}", "r", encoding="utf-8") as fp:
@@ -164,49 +164,61 @@ class Fetcher:
                 except:
                     logger.error(f"no file {file}")
                     continue
+                # if len(pzdata)==len(pzoridata):
+                #     allpass = True
+                #     for i in range(len(pzdata)):
+                #         if pzdata[i]['key'] != pzoridata[i]['key'] or pzdata[i]['original'].replace("\\n","\n")!=pzoridata[i]['original']:
+                #             allpass = False
+                #             break
+                # if allpass:continue
+                pzori_dict = {}
+                for i, item in enumerate(pzoridata):
+                    if item['original'] not in pzori_dict:
+                        pzori_dict[item['original']] = []
+                    pzori_dict[item['original']].append((i, item))
 
-                import re
+                result = []
+                used_indices = set()
 
-                def align_keys(trans, origin):
-                    # 创建一个字典，用标号作为键，trans对象作为值
-                    trans_dict = {item['key'].split('_')[-1]: item for item in trans}
-                    
-                    aligned_origin = []
-                    
-                    for o in origin:
-                        new_o = o.copy()  # 创建原始对象的副本
-                        # 从origin的key中提取标号
-                        number = o['key'].split('_')[-1]
+                for i, item1 in enumerate(pzdata):
+                    if item1['original'].replace("\\n","\n") in pzori_dict:
+                        # 找到索引差最小的匹配项
+                        matches = pzori_dict[item1['original'].replace("\\n","\n")]
+                        best_match = min(matches, key=lambda x: abs(x[0] - i))
                         
-                        # 如果在trans_dict中找到对应的标号，则更新key
-                        if number in trans_dict:
-                            new_o['key'] = trans_dict[number]['key']
+                        # 更新 key 并添加到结果
+                        item1['key'] = best_match[1]['key']
+                        item1['context'] = best_match[1]['context'].replace("\\n","\n")
+                        result.append(item1)
+                        used_indices.add(best_match[0])
+                    elif 'context' in item1 and item1['context'].replace("\\n","\n") in pzori_dict:
+                        # 处理 context 的情况
+                        matches = pzori_dict[item1['context'].replace("\\n","\n")]
+                        best_match = min(matches, key=lambda x: abs(x[0] - i))
                         
-                        aligned_origin.append(new_o)
-                    
-                    return aligned_origin
+                        item1['key'] = best_match[1]['key']
+                        item1['original'] = best_match[1]['original'].replace("\\n","\n")
+                        item1['context'] = best_match[1]['context'].replace("\\n","\n")
+                        result.append(item1)
+                        used_indices.add(best_match[0])
 
-                aligned_origin = align_keys(pzdata, pzoridata)
+                # 添加文件2中未使用的项
+                for i, item in enumerate(pzoridata):
+                    if i not in used_indices:
+                        result.append(item.copy())
 
-                # 打印结果
-                for i in range(len(pzoridata)):
-                    if pzoridata[i]['key'] != aligned_origin[i]['key']:
-                        pzoridata[i]['key'] = aligned_origin[i]['key']
-                with open(f"{root.replace('fetch','pz_origin')}\\{file}", "w+", encoding="utf-8") as fp:
-                    fp.write(json.dumps(pzoridata,ensure_ascii=False))
+                # 创建文件2的键到索引的映射
+                pzoridata_key_to_index = {item['key']: i for i, item in enumerate(pzoridata)}
 
-                newfetch = {}
-                for i in range(len(pzoridata)):
-                    for id in filedata:
-                        if pzoridata[i]['position'] == filedata[id]['position']:
-                            newfetch[pzoridata[i]['key']] = filedata[id]
-                            newfetch[pzoridata[i]['key']]['id'] = pzoridata[i]['key'] if '\js' not in root else pzoridata[i]['key'].split("_")[-1]
-                            # logger.info(f"convert {pzoridata[i]['key']}")
-                            break
-                        # elif pzoridata[i]['original'] == filedata[id]['text']:
-                        #     filedata[id]['id'] = pzoridata[i]['key']
-                        #     newfetch[pzoridata[i]['key']] = filedata[id]
-                        #     # logger.info(f"convert {pzoridata[i]['key']}")
-                        #     break
-                with open(f"{root}\\{file}", "w+", encoding="utf-8") as fp:
-                    fp.write(json.dumps(newfetch,ensure_ascii=False))
+                # 使用更安全的排序方法
+                def safe_sort_key(item):
+                    return pzoridata_key_to_index.get(item['key'])
+
+                result.sort(key=safe_sort_key)
+
+                resultuni=[]
+                for i in result:
+                    if i not in resultuni:
+                        resultuni.append(i)
+                with open(f"{root.replace('fetch','trans')}\\{file}", "w", encoding="utf-8") as fp:
+                    fp.write(json.dumps(resultuni,ensure_ascii=False))

@@ -5,19 +5,20 @@ from src.replacer import *
 from src.HTMLUpdate import *
 
 def main():
-    # fetch = Fetcher()
+    fetch = Fetcher()
     # fetch.fetch_source()
     # fetch.convert_to_pz()
     # fetch.pz_token_update()
-    # replace = Replacer()
+    replace = Replacer()
     # replace.replace_file()
+    replace.convert_to_i18n()
     # oldfetch = Fold()
     # oldfetch.fetch_source()
     # oldfetch.convert_to_pz()
     # trans()
 
-    updater = HTMLUpdater("CourseOfTemptation.html")
-    updater.update_main("CoT.html")
+    # updater = HTMLUpdater("CourseOfTemptation.html")
+    # updater.update_main("CoT.html")
 
 if __name__ == '__main__':
     main()

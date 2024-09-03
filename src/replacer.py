@@ -1,6 +1,7 @@
 import ujson as json
 import os
 import shutil
+import emoji
 
 from .consts import *
 from .log import logger
@@ -38,10 +39,7 @@ class Replacer:
                 delta_index = 0
                 target_file_parts = []
                 last_idx = 0
-                try:
-                    pzdata.sort(key=lambda x:fetch_data[x['key']]['position'])
-                except:
-                    print(pzdata)
+                pzdata.sort(key=lambda x:fetch_data[x['key']]['position'])
                 tempd = {}
                 for d in pzdata:
                     if 'stage' not in d or d['stage']<1:continue
@@ -63,6 +61,7 @@ class Replacer:
                     # if "js" in root and "+" in translation:translation = "\""+translation
                     target_file_parts.append(file_content[last_idx:position])
                     target_file_parts.append(translation)
+                    # if d['key']=="macros_73":print([file_content[last_idx],file_content[position],translation])
                     # if position!=fetch_data[d['key']]['position']:position-=4
                     # delta_index += (len(d['range']) - len(translation))
                     last_idx = position+len(fetch_data[d['key']]['text'])
@@ -77,43 +76,76 @@ class Replacer:
 
                 target_file_parts.append(file_content[last_idx:])
                 if "Passage" in root or "Widgets" in root:
-                    with open(root.replace('trans','translated_source')+"\\"+file.replace('.json','.twee'),encoding="utf-8",mode="w+") as fp:
+                    with open(root.replace('trans','translated_source')+"\\"+file.replace('.json','.twee'),encoding="utf-8",mode="w") as fp:
                         fp.write("".join(target_file_parts))
                 elif "js" ==root[-2]+root[-1]:
-                    with open(root.replace('trans','translated_source')+"\\"+file.replace('.json','.js'),encoding="utf-8",mode="w+") as fp:
+                    with open(root.replace('trans','translated_source')+"\\"+file.replace('.json','.js'),encoding="utf-8",mode="w") as fp:
                         fp.write("".join(target_file_parts))
                 logger.info(f"writed {file} done")
 
-    # def replace_main():
-    #     if DIR_OUTPUT.exists():
-    #         shutil.rmtree(DIR_OUTPUT)
-    #     os.makedirs(DIR_OUTPUT, exist_ok=True)
-    #     os.makedirs(DIR_NEWTOKENIZES, exist_ok=True)
+    def convert_to_i18n(self):
+        i18n = {"typeB":{"TypeBOutputText":[],"TypeBInputStoryScript":[]}}
+        for root, dirs, files in os.walk(DIR_TRANS):
+            for file in files:
+                with open(f"{root}\\{file}", "r", encoding="utf-8") as fp:
+                    pzdata = json.load(fp)
+                with open(f"{root.replace('trans','fetch')}\\{file}", "r", encoding="utf-8") as fp:
+                    fetch_data = json.load(fp)
+                # logger.info(f"file {file} readed")
+                emojiDiffIdx = 0
+                nowPassage = ""
+                for d in pzdata:
+                    key=d['key'].split("_")
+                    keynum = key.pop(-1)
+                    passagename = "_".join(key)
+                    passageStartpos = 0
+                    if passagename!=nowPassage:
+                        nowPassage = passagename
+                        emojiDiffIdx=0
+                    
+                    if 'stage' not in d or d['stage']<1:
+                        for char in fetch_data[d['key']]['text']:
+                            if emoji.is_emoji(char):
+                                emojiDiffIdx += 1
+                        continue
+                    if d['original']==d['translation']:
+                        for char in fetch_data[d['key']]['text']:
+                            if emoji.is_emoji(char):
+                                emojiDiffIdx += 1
+                        continue
+                    if "js" not in root:
+                        passageStartpos = fetch_data[f"{passagename}_0"]['position']+len(fetch_data[f"{passagename}_0"]['text'])+1
+                        d['original'] = d['original'].replace("\\n","\n")
+                        d['translation'] = d['translation'].replace("\\n","\n")
 
-    #     translation_files = {}
-    #     for file in os.listdir(DIR_TRANS):
-    #         with open(DIR_TRANS / file, 'r', encoding='utf-8') as fp:
-    #             data = json.load(fp)
-
-    #         translation_files[file] = {}
-    #         for translation in data:
-    #             translation_files[file][translation['key']] = translation['translation']
-    #         logger.info(f"Successfully write in translation file {file}!")
-
-    #     for file in os.listdir(DIR_SOURCE):
-    #         filename = file[:-3]  # remove '.js'
-    #         if f"{filename}.json" not in translation_files:
-    #             logger.warning(f"No translation File name {filename}.json, skip")
-    #             continue
-
-    #         with open(DIR_SOURCE / file, 'r', encoding='utf-8') as fp:
-    #             content = fp.read()
-
-    #         zip_filename = f"{filename}.json"
-    #         js_filename = file
-    #         target_js = replace_js_file(zip_filename, js_filename, content, translation_files)
-
-    #         with open(DIR_OUTPUT / file, encoding='utf-8', mode='w') as fp:
-    #             fp.write(target_js)
-    #         logger.info(f"output rewrite {file} ")
-
+                        orilist = fetch_data[d['key']]['text'].split("\n")
+                        translist = d['translation'].split("\n")
+                        if len(orilist)!=len(translist):
+                            logger.error(f"{d['key']} \\n error!")
+                            i18n['typeB']['TypeBInputStoryScript'].append({"pos":fetch_data[d['key']]['position']-passageStartpos+emojiDiffIdx,"pN":passagename.replace(" [widget]",""),"f":fetch_data[d['key']]['text'],"t":d['translation']})
+                            for char in fetch_data[d['key']]['text']:
+                                if emoji.is_emoji(char):
+                                    emojiDiffIdx += 1
+                            continue
+                        linepos = fetch_data[d['key']]['position']-passageStartpos
+                        for i in range(len(translist)):
+                            if orilist[i]==translist[i]:
+                                linepos+=len(orilist[i])+1
+                            else:
+                                lineidx=0
+                                for j in range(len(orilist[i])):
+                                    if orilist[i][j].strip():
+                                        lineidx = j
+                                        break
+                                i18n['typeB']['TypeBInputStoryScript'].append({"pos":linepos+lineidx+emojiDiffIdx,"pN":passagename.replace(" [widget]",""),"f":orilist[i].strip(),"t":translist[i].strip()})
+                                linepos+=len(orilist[i])+1
+                            for char in orilist[i]:
+                                if emoji.is_emoji(char):
+                                    emojiDiffIdx += 1
+                    else:
+                        i18n['typeB']['TypeBOutputText'].append({"pos":passageStartpos+fetch_data[d['key']]['position']+emojiDiffIdx,"f":d['original'],"t":d['translation'],"fileName":passagename+".js","js":True})
+                        for char in fetch_data[d['key']]['text']:
+                            if emoji.is_emoji(char):
+                                emojiDiffIdx += 1
+        with open(DIR_TRANSLATED_SOURCE/"i18n.json",encoding="utf-8",mode="w") as fp:
+            fp.write(json.dumps(i18n,ensure_ascii=False))

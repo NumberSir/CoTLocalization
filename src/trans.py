@@ -13,7 +13,7 @@ def trans():
         #     if not os.path.exists(DIR_PZ_ORIGIN/d):
         #         os.makedirs(DIR_PZ_ORIGIN/d)
         for file in files:
-            # if 'js' not in root:continue
+            if 'js' not in root:continue
             logger.info(f"trans {file}")
             try:
                 with open(f"{root.replace('pz_origin','oldfetch')}\\{file}", "r", encoding="utf-8") as fp:

@@ -36,8 +36,8 @@ class JSTextExtractor:
             if len(line)>=2 and line[-2]=="*" and line[-1]=="/":
                 self.in_comment = False
             return
-        contextMinLine = max(0,self.lines.index(line)-4)
-        contextMaxLine = min(len(self.lines),self.lines.index(line)+4)
+        contextMinLine = max(0,self.lines.index(line)-1)
+        contextMaxLine = min(len(self.lines),self.lines.index(line)+1)
         for char_pos, char in enumerate(line):
             if (not self.in_string):
                 if char in ["'", '"', '`']:
@@ -53,25 +53,22 @@ class JSTextExtractor:
                     self.in_string = False
                     if self.in_muti and string_delimiter=="`":self.in_muti = False
                     context = "\n".join(self.lines[contextMinLine:contextMaxLine])
-                    if len(context)>=1000:
+                    if len(context)>=500:
                         context = line if len(line)<500 else ""
                     if "link" == current_string:print(position);a+1
-                    for i in range(len(line)):
-                        if line[i].strip():
-                            line_idx = i
-                            break
-                    self._add_extracted_text(line.strip(), line_start_pos+line_idx,context)
+                    if char_pos+1<len(line) and (line[char_pos+1]!=":" or " " in current_string or re.search(r'[一-龟]',current_string)):
+                        self._add_extracted_text(current_string, position,context)
                     current_string = ""
                     position = None
-                    break
+                    continue
                 if char == "`" and self.in_muti and current_string:
                     self.in_muti = False
                     context = "\n".join(self.lines[contextMinLine:contextMaxLine])
-                    if len(context)>=1000:
+                    if len(context)>=500:
                         context = line if len(line)<500 else ""
-                    self._add_extracted_text(line.strip(),line_start_pos+line_idx,context)
+                    self._add_extracted_text(line.strip(),line_start_pos,context)
                     position = None
-                    break
+                    continue
             if self.in_string and "+" in line:
                 for i in range(len(line)):
                     if line[i].strip():
@@ -79,7 +76,7 @@ class JSTextExtractor:
                         break
                 self.in_string = False
                 context = "\n".join(self.lines[contextMinLine:contextMaxLine])
-                if len(context)>=1000:
+                if len(context)>=500:
                     context = line if len(line)<500 else ""
                 self.extracted_texts.append({
                     'id':self.IDindex,
@@ -104,21 +101,20 @@ class JSTextExtractor:
 
     def _add_extracted_text(self, text, position,context):
         # 使用正则表达式去除字符串定界符
-        # cleaned_text = re.sub(r'^[\'"`]|[\'"`]$', '', text)
-        # if cleaned_text:  # 只有在清理后的文本非空时才添加
+        cleaned_text = re.sub(r'^[\'"`]|[\'"`]$', '', text)
+        if cleaned_text:  # 只有在清理后的文本非空时才添加
             self.extracted_texts.append({
                 'id':self.IDindex,
-                # 'text': cleaned_text,
-                'text': text,
+                'text': cleaned_text,
                 'position': position,
                 'context':context
             })
             self.IDindex+=1
-        # elif text:
-        #     self.extracted_texts.append({
-        #         'id':self.IDindex,
-        #         'text': text[1:],  # 去掉开始定界符
-        #         'position': position,
-        #         'context':context
-        #     })
-        #     self.IDindex+=1
+        elif text:
+            self.extracted_texts.append({
+                'id':self.IDindex,
+                'text': text[1:],  # 去掉开始定界符
+                'position': position,
+                'context':context
+            })
+            self.IDindex+=1

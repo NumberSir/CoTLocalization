@@ -1,7 +1,7 @@
 import re
 import ujson as json
 from .log import logger
-from .parseJS import JSTextExtractor
+from .parseJS4Twee import JSTextExtractor
 
 DEBUG = False
 class TweeParser:
