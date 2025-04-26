@@ -2,6 +2,13 @@ import re
 import ujson as json
 from .log import logger
 from .parseJS4Twee import JSTextExtractor
+from .parseJSv2 import JSParserV2
+import hashlib
+
+def generate_hash(text):
+    # 使用 SHA-256 算法
+    hash_object = hashlib.md5(text.encode('utf-8'))
+    return hash_object.hexdigest()
 
 DEBUG = False
 class TweeParser:
@@ -137,6 +144,8 @@ class TweeParser:
             elif self.peek()=="\"":
                 self.consume(2)
                 tag_content += "\""+self.consume_until('"')
+            else:
+                self.consume(1)
             
             tag_content += self.consume_until('>')
             # self.extracted_texts_push("HTML",f"{tag_content}>",zeroIndex)
@@ -193,8 +202,8 @@ class TweeParser:
 
     def parse_js_content(self):
         js_content = self.consume_until('<</script>>')
-        parser = JSTextExtractor()
-        parser.parse(js_content.split("\n"))
+        parser = JSParserV2()
+        parser.parse(js_content)
         for p in parser.extracted_texts:
             self.extracted_texts_push("js_code",p['text'],p['position']+self.index-len(js_content),p["context"])
         if self.content[self.index:].startswith('<</script>>'):
@@ -242,12 +251,17 @@ class TweeParser:
         if self.content[position]!=text[0]:
             print(type,text,position,self.content[position-5:position+5])
             a+1
+        i=0
+        for t in self.extracted_texts:
+            if t['text'] == text:
+                i+=1
         self.extracted_texts.append({
             'id': f"{self.passage}_{self.IDindex}",
             'type': type,
             'text': text,
             'position': position,
-            'context':context
+            'context':context,
+            'hash': generate_hash(text) if i==0 else generate_hash(text)+str(i)
         })
         self.IDindex+=1
 

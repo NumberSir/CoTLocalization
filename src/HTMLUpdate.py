@@ -66,6 +66,29 @@ class HTMLUpdater:
                 with open(os.path.join(self.js_folder, js_file), 'r', encoding='utf-8') as file:
                     js_content += file.read() + "\n\n"
         return js_content
+    
+    def ModLoader_inject(self,html_path):
+        with open(html_path, 'r', encoding='utf-8') as file:
+            html = file.read()
+        html = html.replace("if (DEBUG) { console.log('[SugarCube/main()] Document loaded; beginning startup.'); }","const mainStart = () => {if (DEBUG) { console.log('[SugarCube/main()] Document loaded; beginning startup.'); }")
+        html = html.replace("return Alert.fatal(null, ex.message, ex);\n	}","""return Alert.fatal(null, ex.message, ex);\n	}};if (typeof window.modSC2DataManager !== 'undefined') {
+		window.modSC2DataManager.getModLoader().getIndexDBLoader().setConfigKey("ModLoader_IndexDBLoader","ModLoader_IndexDBLoader",`CoTmodDataLocalStorageZipList`);
+		window.modSC2DataManager.startInit()
+			.then(() => window.jsPreloader.startLoad())
+			.then(() => mainStart())
+			.catch(err => {
+				console.error(err);
+			});
+	}
+	else {
+		mainStart();
+	}""")
+        with open(html_path, 'w', encoding='utf-8') as file:
+            file.write(html)
+        # command = 'cd D:\Game\CourseOfTemptation_desktop_v0.5.2d\ModLoader;node "D:\Game\CourseOfTemptation_desktop_v0.5.2d\ModLoader\dist-insertTools\sc2ReplaceTool.js" "'+str(self.html_path)+'" "C:\\Users\\tangh\\Desktop\\DOLMODDING\\vrelnir_localization\\degrees-of-lewdity-master\\devTools\\tweego\\storyFormats\\sugarcube-2\\format.js";node "D:\\Game\\CourseOfTemptation_desktop_v0.5.2d\\ModLoader\\dist-insertTools\\insert2html.js" "'+str(self.html_path)+'.sc2replace.html" "modList.json" "D:\\Game\\CourseOfTemptation_desktop_v0.5.2d\\ModLoader\\dist-BeforeSC2\\BeforeSC2.js";node "D:\\Game\\CourseOfTemptation_desktop_v0.5.2d\\ModLoader\\dist-insertTools\\insert2html-polufill.js" "'+str(self.html_path)+'.sc2replace.html" "modList.json" "D:\\Game\\CourseOfTemptation_desktop_v0.5.2d\\ModLoader\\dist-BeforeSC2\BeforeSC2.js" "D:\\Game\\CourseOfTemptation_desktop_v0.5.2d\\ModLoader\\dist-BeforeSC2\polyfill.js";'
+        # print(command)
+        # os.popen(command)
+        logger.info("done")
 
 # 使用示例
 if __name__ == "__main__":
