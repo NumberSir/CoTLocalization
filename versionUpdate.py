@@ -12,7 +12,7 @@ def update(oldversion, newversion):
     # fetch.convert_to_pz()
     # fetch.hash_update()
     # fetch.position_update()
-    fetch2.compare_source(newversion) # compare with new version
+    fetch2.compare_source_new(newversion) # compare with new version
     # fetch.fetch_source()
     fetch.convert_to_pz()
     # fetch2.fetch_source()

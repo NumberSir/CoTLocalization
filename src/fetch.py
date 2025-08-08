@@ -482,3 +482,140 @@ class Fetcher:
         compare_directories(self.margeSourcePath/'Passages', DIR_MARGE_SOURCE/version2/'Passages')
         compare_directories(self.sourcePath/'Widgets', DIR_SOURCE/version2/'Widgets')
         compare_directories(self.sourcePath/'js', DIR_SOURCE/version2/'js')
+
+    def compare_source_new(self,version2):
+        # 基于 parseTwee/parseJSv2 的“键(id)”进行对比与合并，不再使用 hash 匹配
+        os.makedirs(DIR_FETCH/version2/"Passages", exist_ok=True)
+        os.makedirs(DIR_FETCH/version2/"js", exist_ok=True)
+        os.makedirs(DIR_FETCH/version2/"Widgets", exist_ok=True)
+        try:
+            with open(self.fetchPath/"hash_dict.json", "r", encoding="utf-8") as fp:
+                hash_dict = json.loads(fp.read())
+        except:
+            hash_dict = {}
+
+        def compare_directories_by_key(dir1, dir2):
+            comparison = filecmp.dircmp(dir1, dir2)
+            # 打印不同和新增的文件
+            print("不同的文件(基于Key):")
+            for name in comparison.diff_files + comparison.right_only:
+                dir = str(dir1).split("\\")[-1]
+                print(f"- {name}")
+
+                # 读取旧版抓取数据
+                try:
+                    if name.endswith('.js'):
+                        with open(self.fetchPath/dir/name.replace(".js",".json"), "r", encoding="utf-8") as fp:
+                            oldfetch = json.loads(fp.read())
+                    else:
+                        with open(self.fetchPath/dir/name.replace(".twee",".json"), "r", encoding="utf-8") as fp:
+                            oldfetch = json.loads(fp.read())
+                except:
+                    logger.info(f"new file {name}")
+                    oldfetch = {}
+
+                # 解析新版源码
+                with open(dir2/name, "r", encoding="utf-8") as fp:
+                    if name.endswith('.js'):
+                        parser = JSParserV2()
+                    else:
+                        parser = TweeParser()
+                    parser.parse(fp.read())
+                parser.extracted_texts.sort(key=lambda x:x['position'])
+
+                # 构建“键”为主的新数据映射
+                newdata = {}
+                if name.endswith('.js'):
+                    fileprefix = name.replace(".js","")
+                    for d in parser.extracted_texts:
+                        key = f"{fileprefix}_{d['id']}"
+                        newdata[key] = d
+                else:
+                    for d in parser.extracted_texts:
+                        newdata[d['id']] = d
+
+                # 基于 Key 的合并逻辑
+                newfetch = {}
+                used_new_keys = set()
+
+                # 旧键优先保留：存在则更新为新文本，不存在则标记为过时(stage=9)
+                for key, val in oldfetch.items():
+                    if key in newdata:
+                        newfetch[key] = newdata[key]
+                        used_new_keys.add(key)
+                    else:
+                        entry = val.copy()
+                        entry['stage'] = 9
+                        newfetch[key] = entry
+                        logger.warning(f"找不到匹配项（按键）：{key}")
+
+                # 加入新增键
+                for key, val in newdata.items():
+                    if key not in used_new_keys and key not in newfetch:
+                        newfetch[key] = val
+                        logger.info(f"新增项（按键）：{key}")
+
+                # 写出结果
+                out_path = DIR_FETCH/version2/dir/name.replace(".js",".json").replace(".twee",".json")
+                with open(out_path, "w", encoding="utf-8") as fp:
+                    fp.write(json.dumps(newfetch, ensure_ascii=False))
+
+                # 同步写入 hash_dict（仅保留以兼容下游流程；比较逻辑不再依赖hash）
+                try:
+                    hash_dict[name] = {}
+                    for k in newfetch:
+                        d = newfetch[k]
+                        if name.endswith(".js"):
+                            rid = f"{name.replace('.js','')}_{d['id']}"
+                        else:
+                            rid = d['id']
+                        hash_dict[name][d['hash']] = {"id": rid, "position": d['position']}
+                except Exception as e:
+                    logger.error(f"更新hash_dict失败: {name} - {str(e)}")
+
+            # 写出新的 hash_dict（兼容性用途）
+            with open(DIR_FETCH/version2/"hash_dict.json", "w", encoding="utf-8") as fp:
+                fp.write(json.dumps(hash_dict, ensure_ascii=False))
+
+        # 三类目录逐一对比
+        compare_directories_by_key(self.margeSourcePath/'Passages', DIR_MARGE_SOURCE/version2/'Passages')
+        compare_directories_by_key(self.sourcePath/'Widgets', DIR_SOURCE/version2/'Widgets')
+        compare_directories_by_key(self.sourcePath/'js', DIR_SOURCE/version2/'js')
+
+    def clean_obsolete_entries(self):
+        for root, dirs, files in os.walk(self.fetchPath):
+            for file in files:
+                if file == "hash_dict.json":  # 跳过hash字典文件
+                    continue
+
+                file_path = os.path.join(root, file)
+                logger.info(f"Processing {file_path} for obsolete entries")
+                try:
+                    # 读取文件内容
+                    with open(file_path, "r", encoding="utf-8") as fp:
+                        try:
+                            data = json.load(fp)
+                        except json.JSONDecodeError:
+                            logger.error(f"Skipping invalid JSON file: {file_path}")
+                            continue
+
+                    if not isinstance(data, dict):
+                        logger.warning(f"Skipping file with non-dictionary root structure: {file_path}")
+                        continue
+
+                    cleaned_data = {
+                        key: value for key, value in data.items()
+                        if isinstance(value, dict) and value.get("stage") != 9
+                    }
+                    # 如果数据有变化，则写回文件
+                    if len(cleaned_data) != len(data):
+                        logger.info(f"Removed {len(data) - len(cleaned_data)} obsolete entries from {file_path}")
+                        with open(file_path, "w", encoding="utf-8") as fp:
+                            json.dump(cleaned_data, fp, ensure_ascii=False, indent=2)
+
+                except FileNotFoundError:
+                     logger.error(f"File not found during cleanup: {file_path}")
+                except Exception as e:
+                    logger.error(f"Error processing {file_path}: {str(e)}")
+
+        logger.info("Obsolete entries cleanup completed")
